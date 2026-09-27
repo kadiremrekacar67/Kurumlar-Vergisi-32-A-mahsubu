@@ -58,6 +58,11 @@ label.f{display:block;margin-top:10px}
 label.f span{display:block;font-size:.8rem;color:var(--muted);margin-bottom:3px}
 input,textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--inp);border:1px solid var(--line);border-radius:6px;padding:9px 10px}
 textarea{min-height:110px;resize:vertical}
+label.f.acw{position:relative}
+.ac{position:absolute;left:0;right:0;top:100%;z-index:20;margin:2px 0 0;padding:4px 0;list-style:none;max-height:260px;overflow:auto;background:var(--sheet);border:1px solid var(--line);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.ac li{display:flex;justify-content:space-between;gap:8px;padding:10px;cursor:pointer}
+.ac li small{color:var(--muted);white-space:nowrap}
+.ac li:hover,.ac li[aria-selected="true"]{background:var(--inp)}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--terkin);outline-offset:2px}
 details summary{cursor:pointer;font-weight:700;padding:4px 0}
 .rc{border:1px solid var(--line);border-radius:8px;padding:4px 12px 10px;margin-top:10px;background:var(--paper)}
@@ -464,7 +469,7 @@ document.addEventListener("change",e=>{
 
 function renderForm(){
   if(S.beyYil===undefined && S.beyAyNo===undefined){ const d=beyDonemAyir(S.beyDonem); S.beyYil=d?.y??null; S.beyAyNo=d?.a??null; }
-  $("fMukellef").innerHTML = `<label class="f"><span>Mükellef türü</span><select data-k="tip" data-t="text"><option value="kurum"${S.tip!=="sahis"?" selected":""}>Kurum (şirket)</option><option value="sahis"${S.tip==="sahis"?" selected":""}>Gerçek kişi / şahıs işletmesi</option></select></label>`+field("Unvan / ad soyad","unvan")+field("VKN (şirket 10, şahıs TCKN 11 hane)","vkn","text",'inputmode="numeric"')+field("Vergi dairesi","vd","text",'list="vdListe" autocomplete="off" placeholder="Yazıp listeden seçin, ör. Küçükçekmece"')
+  $("fMukellef").innerHTML = `<label class="f"><span>Mükellef türü</span><select data-k="tip" data-t="text"><option value="kurum"${S.tip!=="sahis"?" selected":""}>Kurum (şirket)</option><option value="sahis"${S.tip==="sahis"?" selected":""}>Gerçek kişi / şahıs işletmesi</option></select></label>`+field("Unvan / ad soyad","unvan")+field("VKN (şirket 10, şahıs TCKN 11 hane)","vkn","text",'inputmode="numeric"')+field("Vergi dairesi","vd","text",'data-ac="vd" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" placeholder="Yazıp listeden seçin, ör. Küçükçekmece"').replace('class="f"','class="f acw"')
     +field("Teşvik belgesi no","belgeNo")+field("Teşvik belgesi tarihi","belgeTarih","date");
   $("fParam").innerHTML = field("Terkin oranı (%)","tor","num")+field("Üst sınır oranı (%)","ust","num")+field("Vazgeçme katsayısı","kat","num")
     +aySec("KV beyannamesi ayı","beyanAy")+field("Talep süresi (ay)","sure","int")+field("Uygulama başlangıç yılı","basYil","int");
@@ -553,12 +558,38 @@ $("btnWord").onclick=async()=>{
 if("serviceWorker" in navigator && location.protocol==="https:"){
   navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
-if(typeof VERGI_DAIRELERI!=="undefined"){
-  const dl=document.createElement("datalist"); dl.id="vdListe";
-  dl.innerHTML=[...VERGI_DAIRELERI].sort((a,b)=>a[2].localeCompare(b[2],"tr")||a[1].localeCompare(b[1],"tr"))
-    .map(([kod,ad,il])=>`<option value="${esc(ad)}" label="${esc(il)} · ${kod}">`).join("");
-  document.body.appendChild(dl);
+/* Vergi dairesi arama listesi: tarayıcının datalist'i Android Chrome'da güvenilir görünmediği için kendi listemiz */
+const trKatla=t=>String(t||"").toLocaleLowerCase("tr-TR").replace(/[çğıöşüâî]/g,c=>({ç:"c",ğ:"g",ı:"i",ö:"o",ş:"s",ü:"u",â:"a",î:"i"})[c]);
+const VD_ARAMA=typeof VERGI_DAIRELERI==="undefined"?[]:[...VERGI_DAIRELERI]
+  .sort((a,b)=>a[2].localeCompare(b[2],"tr")||a[1].localeCompare(b[1],"tr"))
+  .map(([kod,ad,il])=>({kod,ad,il,k:trKatla(`${ad} ${il} ${kod}`)}));
+let acKapatZaman=null;
+function acKapat(el){ el.parentElement.querySelector(".ac")?.remove(); el.setAttribute("aria-expanded","false"); }
+function acAc(el){
+  clearTimeout(acKapatZaman);
+  const q=trKatla(el.value).split(/\s+/).filter(Boolean);
+  const bul=VD_ARAMA.filter(x=>q.every(w=>x.k.includes(w))).slice(0,50);
+  acKapat(el); if(!bul.length) return;
+  const ul=document.createElement("ul"); ul.className="ac"; ul.setAttribute("role","listbox");
+  ul.innerHTML=bul.map(x=>`<li role="option" data-v="${esc(x.ad)}">${esc(x.ad)}<small>${esc(x.il)} · ${x.kod}</small></li>`).join("");
+  ul.addEventListener("mousedown",e=>e.preventDefault());
+  ul.addEventListener("click",e=>{ const li=e.target.closest("li"); if(li) acSec(el,li.dataset.v); });
+  el.after(ul); el.setAttribute("aria-expanded","true");
 }
+function acSec(el,v){ clearTimeout(acKapatZaman); el.value=v; acKapat(el); el.dispatchEvent(new Event("change",{bubbles:true})); }
+document.addEventListener("input",e=>{ if(e.target.dataset.ac) acAc(e.target); });
+document.addEventListener("focusin",e=>{ if(e.target.dataset.ac) acAc(e.target); });
+document.addEventListener("focusout",e=>{ const el=e.target; if(el.dataset.ac) acKapatZaman=setTimeout(()=>acKapat(el),250); });
+document.addEventListener("keydown",e=>{
+  const el=e.target; if(!el.dataset.ac) return;
+  const ul=el.parentElement.querySelector(".ac"); if(!ul) return;
+  const li=[...ul.children], i=li.findIndex(x=>x.getAttribute("aria-selected")==="true");
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+    e.preventDefault(); const j=e.key==="ArrowDown"?Math.min(i+1,li.length-1):Math.max(i-1,0);
+    li.forEach((x,k)=>x.setAttribute("aria-selected",k===j)); li[j].scrollIntoView({block:"nearest"});
+  } else if(e.key==="Enter" && i>=0){ e.preventDefault(); acSec(el,li[i].dataset.v); }
+  else if(e.key==="Escape") acKapat(el);
+});
 renderForm(); update();
 
 </script>
