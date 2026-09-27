@@ -399,6 +399,22 @@ function field(label,k,t="text",extra=""){
   return `<label class="f"><span>${label}</span><input data-k="${k}" data-t="${t}" value="${esc(shown(getPath(k),t))}" ${t==="date"?'type="date"':""} ${t==="num"||t==="int"?'inputmode="decimal"':""} ${extra}></label>`;
 }
 const ORANLAR=Array.from({length:10},(_,i)=>(i+1)*5); /* %5 … %50 */
+const AYLAR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+function aySec(label,k){
+  const v=getPath(k);
+  return `<label class="f"><span>${label}</span><select data-k="${k}" data-t="int"><option value="">Ay seçin</option>${AYLAR.map((a,i)=>`<option value="${i+1}"${i+1===v?" selected":""}>${a}</option>`).join("")}</select></label>`;
+}
+/* "2025 yılı Mayıs ayı", "05/2025", "2025-05" gibi eski serbest metinleri yıl + aya çevirir */
+function beyDonemAyir(t){
+  t=String(t||"").trim(); let m;
+  const yil=t.match(/\b(\d{4})\b/), kel=t.toLocaleLowerCase("tr-TR").split(/[^a-zçğıöşü]+/u);
+  const aylar=AYLAR.map((x,i)=>kel.includes(x.toLocaleLowerCase("tr-TR"))?i+1:0).filter(Boolean);
+  if(yil && aylar.length===1) return {y:+yil[1],a:aylar[0]};
+  if((m=t.match(/^(\d{1,2})[./-](\d{4})$/)) && +m[1]>=1 && +m[1]<=12) return {y:+m[2],a:+m[1]};
+  if((m=t.match(/^(\d{4})[./-](\d{1,2})$/)) && +m[2]>=1 && +m[2]<=12) return {y:+m[1],a:+m[2]};
+  return null;
+}
+const beyDonemYaz=()=>S.beyYil&&S.beyAyNo?`${S.beyYil} yılı ${AYLAR[S.beyAyNo-1]} ayı`:"";
 function yilSec(label,k){
   const v=getPath(k), son=new Date().getFullYear();
   const yillar=[]; for(let y=son;y>=2009;y--) yillar.push(y);
@@ -426,18 +442,21 @@ document.addEventListener("change",e=>{
   }
   if(t==="num") v=parseNum(v); else if(t==="int"){ v=parseInt(v); if(isNaN(v)) v=null; }
   setPath(el.dataset.k,v);
+  if(el.dataset.k==="beyYil"||el.dataset.k==="beyAyNo"){ S.beyDonem=beyDonemYaz(); const n=$("beyEski"); if(n) n.remove(); }
   if(t==="num") el.value=shown(v,t);
   save(); update();
 });
 
 function renderForm(){
+  if(S.beyYil===undefined && S.beyAyNo===undefined){ const d=beyDonemAyir(S.beyDonem); S.beyYil=d?.y??null; S.beyAyNo=d?.a??null; }
   $("fMukellef").innerHTML = `<label class="f"><span>Mükellef türü</span><select data-k="tip" data-t="text"><option value="kurum"${S.tip!=="sahis"?" selected":""}>Kurum (şirket)</option><option value="sahis"${S.tip==="sahis"?" selected":""}>Gerçek kişi / şahıs işletmesi</option></select></label>`+field("Unvan / ad soyad","unvan")+field("VKN (şirket 10, şahıs TCKN 11 hane)","vkn","text",'inputmode="numeric"')+field("Vergi dairesi","vd","text",'list="vdListe" autocomplete="off" placeholder="Yazıp listeden seçin, ör. Küçükçekmece"')
     +field("Teşvik belgesi no","belgeNo")+field("Teşvik belgesi tarihi","belgeTarih","date");
   $("fParam").innerHTML = field("Terkin oranı (%)","tor","num")+field("Üst sınır oranı (%)","ust","num")+field("Vazgeçme katsayısı","kat","num")
-    +field("KV beyannamesi ayı","beyanAy","int")+field("Talep süresi (ay)","sure","int")+field("Uygulama başlangıç yılı","basYil","int");
-  $("fDilekce").innerHTML = field("Dilekçe tarihi","dilTarih","date")+field("Katkının hesap dönemi (yıl)","donem","int")
+    +aySec("KV beyannamesi ayı","beyanAy")+field("Talep süresi (ay)","sure","int")+field("Uygulama başlangıç yılı","basYil","int");
+  $("fDilekce").innerHTML = field("Dilekçe tarihi","dilTarih","date")+yilSec("Katkının hesap dönemi (yıl)","donem")
     +field("İndirimli KV ile kullanılan katkı (TL)","ikv","num")+field("Önceki dilekçelerle terkin edilen (TL)","prior","num")
-    +field("Beyanname türü","beyTur")+field("Beyanname dönemi","beyDonem")+field("Beyanname tarihi","beyTarih","date")+field("Yetkili adı soyadı (şirketler için)","yetkili");
+    +field("Beyanname türü","beyTur")+yilSec("Beyanname dönemi – yıl","beyYil")+aySec("Beyanname dönemi – ay","beyAyNo")
+    +(S.beyDonem&&!(S.beyYil&&S.beyAyNo)?`<p class="muted" id="beyEski" style="grid-column:1/-1;margin:0 0 8px">Önceki giriş: “${esc(S.beyDonem)}”. Dilekçede bu kullanılır; yıl ve ay seçince güncellenir.</p>`:"")+field("Beyanname tarihi","beyTarih","date")+field("Yetkili adı soyadı (şirketler için)","yetkili");
   $("fYat").innerHTML = S.yat.map((y,i)=>`<div class="rc">
     <div class="rc-grid">${yilSec("Yıl",`yat.${i}.yil`)}${field("Harcama kalemi",`yat.${i}.acik`)}
     ${field("Harcama (TL)",`yat.${i}.harcama`,"num")}${oranSec("Katkı oranı (belgedeki)",i)}
