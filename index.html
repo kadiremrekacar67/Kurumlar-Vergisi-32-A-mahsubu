@@ -89,6 +89,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
 <script src="jszip.min.js"></script>
+<script src="vergi-daireleri.js"></script>
 </head>
 <body>
 <main>
@@ -184,6 +185,7 @@ function vdBaslik(vd){
   let s=String(vd||"").trim().replace(/\s+/g," ");
   s=s.replace(/\s*(müdürlüğüne|müdürlüğü|mudurlugune|mudurlugu)\.?\s*$/iu,"").trim();
   s=s.replace(/\s*(v\.\s?d\.?|vd)\s*$/iu," Vergi Dairesi").trim();
+  if(/defterdarl/iu.test(s)) return s.toLocaleUpperCase("tr-TR").replace(/I$/u,"INA");
   if(s && !/vergi\s+dairesi/iu.test(s)) s+=" Vergi Dairesi";
   return (s||"…").toLocaleUpperCase("tr-TR")+" MÜDÜRLÜĞÜNE";
 }
@@ -406,7 +408,7 @@ document.addEventListener("change",e=>{
 });
 
 function renderForm(){
-  $("fMukellef").innerHTML = `<label class="f"><span>Mükellef türü</span><select data-k="tip" data-t="text"><option value="kurum"${S.tip!=="sahis"?" selected":""}>Kurum (şirket)</option><option value="sahis"${S.tip==="sahis"?" selected":""}>Gerçek kişi / şahıs işletmesi</option></select></label>`+field("Unvan / ad soyad","unvan")+field("VKN (şirket 10, şahıs TCKN 11 hane)","vkn","text",'inputmode="numeric"')+field("Vergi dairesi","vd","text",'placeholder="ör. Küçükçekmece Vergi Dairesi"')
+  $("fMukellef").innerHTML = `<label class="f"><span>Mükellef türü</span><select data-k="tip" data-t="text"><option value="kurum"${S.tip!=="sahis"?" selected":""}>Kurum (şirket)</option><option value="sahis"${S.tip==="sahis"?" selected":""}>Gerçek kişi / şahıs işletmesi</option></select></label>`+field("Unvan / ad soyad","unvan")+field("VKN (şirket 10, şahıs TCKN 11 hane)","vkn","text",'inputmode="numeric"')+field("Vergi dairesi","vd","text",'list="vdListe" autocomplete="off" placeholder="Yazıp listeden seçin, ör. Küçükçekmece"')
     +field("Teşvik belgesi no","belgeNo")+field("Teşvik belgesi tarihi","belgeTarih","date");
   $("fParam").innerHTML = field("Terkin oranı (%)","tor","num")+field("Üst sınır oranı (%)","ust","num")+field("Vazgeçme katsayısı","kat","num")
     +field("KV beyannamesi ayı","beyanAy","int")+field("Talep süresi (ay)","sure","int")+field("Uygulama başlangıç yılı","basYil","int");
@@ -493,6 +495,12 @@ $("btnWord").onclick=async()=>{
 };
 if("serviceWorker" in navigator && location.protocol==="https:"){
   navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+if(typeof VERGI_DAIRELERI!=="undefined"){
+  const dl=document.createElement("datalist"); dl.id="vdListe";
+  dl.innerHTML=[...VERGI_DAIRELERI].sort((a,b)=>a[2].localeCompare(b[2],"tr")||a[1].localeCompare(b[1],"tr"))
+    .map(([kod,ad,il])=>`<option value="${esc(ad)}" label="${esc(il)} · ${kod}">`).join("");
+  document.body.appendChild(dl);
 }
 renderForm(); update();
 

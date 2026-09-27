@@ -1,11 +1,12 @@
 // Çevrimdışı çalışma için servis çalışanı.
 // Güncelleme yaparken CACHE değerini artırın (ör. terkin-v2); eski önbellek otomatik silinir.
-const CACHE = "terkin-v1";
+const CACHE = "terkin-v2";
 const DOSYALAR = [
   "./",
   "index.html",
   "manifest.webmanifest",
   "jszip.min.js",
+  "vergi-daireleri.js",
   "icons/icon-180.png",
   "icons/icon-192.png",
   "icons/icon-512.png"
