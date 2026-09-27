@@ -1,6 +1,6 @@
 // Çevrimdışı çalışma için servis çalışanı.
 // Güncelleme yaparken CACHE değerini artırın (ör. terkin-v2); eski önbellek otomatik silinir.
-const CACHE = "terkin-v4";
+const CACHE = "terkin-v5";
 const DOSYALAR = [
   "./",
   "index.html",
