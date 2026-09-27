@@ -160,7 +160,7 @@ const DEFAULTS = {
   tor:10, ust:50, kat:1, beyanAy:4, sure:2, basYil:2022,
   yat:[{yil:2025, acik:"2022 ve sonrası toplam (Ek-3 özeti)", harcama:16799574.33, oran:null, manuel:4318576.09}],
   dilTarih:"2025-06-25", donem:2025, ikv:0, prior:0,
-  beyTur:"muhtasar", beyDonem:"2025 yılı Mayıs ayı", beyTarih:"2025-06-23",
+  beyTur:"muhtasar ve prim hizmet", beyDonem:"2025 yılı Mayıs ayı", beyTarih:"2025-06-23",
   vergi:[
     {tah:"2025062301XXX0000001", tur:"0003 – Gelir vergisi stopajı (muhtasar)", vade:"2025-06-26", asil:278717.89, gz:0, talep:null},
     {tah:"2025062301XXX0000001", tur:"1046 – Tevkifattan alınan damga vergisi", vade:"2025-06-26", asil:10903.93, gz:0, talep:null},
@@ -428,7 +428,38 @@ function beyDonemAyir(t){
   if((m=t.match(/^(\d{4})[./-](\d{1,2})$/)) && +m[2]>=1 && +m[2]<=12) return {y:+m[1],a:+m[2]};
   return null;
 }
-const beyDonemYaz=()=>S.beyYil&&S.beyAyNo?`${S.beyYil} yılı ${AYLAR[S.beyAyNo-1]} ayı`:"";
+/* Terkin edilebilecek vergileri (KDV ve ÖTV hariç) tahakkuk ettiren beyannameler; d = dönem tipi.
+   Dördüncü geçici vergi dönemi için 2020'den beri beyanname verilmez (GVK 120). */
+const BEYAN_TURLERI=[
+  {v:"muhtasar ve prim hizmet",t:"Muhtasar ve prim hizmet beyannamesi",d:"ay"},
+  {v:"damga vergisi",t:"Damga vergisi beyannamesi",d:"ay"},
+  {v:"banka ve sigorta muameleleri vergisi",t:"Banka ve sigorta muameleleri vergisi beyannamesi",d:"ay"},
+  {v:"kurum geçici vergi",t:"Kurum geçici vergi beyannamesi",d:"ceyrek"},
+  {v:"gelir geçici vergi",t:"Gelir geçici vergi beyannamesi",d:"ceyrek"},
+  {v:"kurumlar vergisi",t:"Kurumlar vergisi beyannamesi",d:"yil"},
+  {v:"yıllık gelir vergisi",t:"Yıllık gelir vergisi beyannamesi",d:"yil"}
+];
+const GV_DONEMLER=["1. dönem (Ocak–Mart)","2. dönem (Nisan–Haziran)","3. dönem (Temmuz–Eylül)"];
+const beyTurBul=v=>{ const k=String(v||"").trim().toLocaleLowerCase("tr-TR"); return BEYAN_TURLERI.find(b=>b.v===k||(k==="muhtasar"&&b.v==="muhtasar ve prim hizmet")); };
+const beyDonemTip=()=>beyTurBul(S.beyTur)?.d||"ay";
+function beyDonemYaz(){
+  const d=beyDonemTip();
+  if(d==="yil") return S.beyYil?`${S.beyYil} hesap`:"";
+  if(d==="ceyrek") return S.beyYil&&S.beyGvd?`${S.beyYil} yılı ${S.beyGvd}. geçici vergi`:"";
+  return S.beyYil&&S.beyAyNo?`${S.beyYil} yılı ${AYLAR[S.beyAyNo-1]} ayı`:"";
+}
+function beyTurSec(){
+  const v=S.beyTur||"", b=beyTurBul(v), eski=v&&!b;
+  const opt=(k,t,sel)=>`<option value="${esc(k)}"${sel?" selected":""}>${esc(t)}</option>`;
+  return `<label class="f"><span>Beyanname türü</span><select data-k="beyTur" data-t="text">${opt("","Beyanname seçin",!v)}`
+    +(eski?opt(v,`${v} (daha önce girilmiş)`,true):"")+BEYAN_TURLERI.map(x=>opt(x.v,x.t,b===x)).join("")+`</select></label>`;
+}
+function beyDonemAlanlari(){
+  const d=beyDonemTip(), yil=yilSec("Beyanname dönemi – yıl","beyYil");
+  if(d==="yil") return yil;
+  if(d==="ceyrek") return yil+`<label class="f"><span>Geçici vergi dönemi</span><select data-k="beyGvd" data-t="int"><option value="">Dönem seçin</option>${GV_DONEMLER.map((t,i)=>`<option value="${i+1}"${S.beyGvd===i+1?" selected":""}>${t}</option>`).join("")}</select></label>`;
+  return yil+aySec("Beyanname dönemi – ay","beyAyNo");
+}
 function turSec(i){
   const v=S.vergi[i].tur||"", eski=v && !VERGI_TURLERI.includes(v);
   const opt=(k,t)=>`<option value="${esc(k)}"${k===v?" selected":""}>${esc(t)}</option>`;
@@ -462,7 +493,11 @@ document.addEventListener("change",e=>{
   }
   if(t==="num") v=parseNum(v); else if(t==="int"){ v=parseInt(v); if(isNaN(v)) v=null; }
   setPath(el.dataset.k,v);
-  if(el.dataset.k==="beyYil"||el.dataset.k==="beyAyNo"){ S.beyDonem=beyDonemYaz(); const n=$("beyEski"); if(n) n.remove(); }
+  if(["beyYil","beyAyNo","beyGvd","beyTur"].includes(el.dataset.k)){
+    const yeni=beyDonemYaz(); if(yeni||el.dataset.k!=="beyTur") S.beyDonem=yeni;
+    if(el.dataset.k==="beyTur"){ save(); renderForm(); update(); return; }
+    const n=$("beyEski"); if(n) n.remove();
+  }
   if(t==="num") el.value=shown(v,t);
   save(); update();
 });
@@ -475,8 +510,8 @@ function renderForm(){
     +aySec("KV beyannamesi ayı","beyanAy")+field("Talep süresi (ay)","sure","int")+field("Uygulama başlangıç yılı","basYil","int");
   $("fDilekce").innerHTML = field("Dilekçe tarihi","dilTarih","date")+yilSec("Katkının hesap dönemi (yıl)","donem")
     +field("İndirimli KV ile kullanılan katkı (TL)","ikv","num")+field("Önceki dilekçelerle terkin edilen (TL)","prior","num")
-    +field("Beyanname türü","beyTur")+yilSec("Beyanname dönemi – yıl","beyYil")+aySec("Beyanname dönemi – ay","beyAyNo")
-    +(S.beyDonem&&!(S.beyYil&&S.beyAyNo)?`<p class="muted" id="beyEski" style="grid-column:1/-1;margin:0 0 8px">Önceki giriş: “${esc(S.beyDonem)}”. Dilekçede bu kullanılır; yıl ve ay seçince güncellenir.</p>`:"")+field("Beyanname tarihi","beyTarih","date")+field("Yetkili adı soyadı (şirketler için)","yetkili");
+    +beyTurSec()+beyDonemAlanlari()
+    +(S.beyDonem&&S.beyDonem!==beyDonemYaz()?`<p class="muted" id="beyEski" style="grid-column:1/-1;margin:0 0 8px">Önceki giriş: “${esc(S.beyDonem)}”. Dilekçede bu kullanılır; yıl ve ay seçince güncellenir.</p>`:"")+field("Beyanname tarihi","beyTarih","date")+field("Yetkili adı soyadı (şirketler için)","yetkili");
   $("fYat").innerHTML = S.yat.map((y,i)=>`<div class="rc">
     <div class="rc-grid">${yilSec("Yıl",`yat.${i}.yil`)}${field("Harcama kalemi",`yat.${i}.acik`)}
     ${field("Harcama (TL)",`yat.${i}.harcama`,"num")}${oranSec("Katkı oranı (belgedeki)",i)}
