@@ -157,15 +157,15 @@ const DEFAULTS = {
   dilTarih:"2025-06-25", donem:2025, ikv:0, prior:0,
   beyTur:"muhtasar", beyDonem:"2025 yılı Mayıs ayı", beyTarih:"2025-06-23",
   vergi:[
-    {tah:"2025062301XXX0000001", tur:"003 STPJ – Gelir vergisi stopajı", vade:"2025-06-26", asil:278717.89, gz:0, talep:null},
-    {tah:"2025062301XXX0000001", tur:"1046 TDMG – Damga vergisi", vade:"2025-06-26", asil:10903.93, gz:0, talep:null},
-    {tah:"2025062301XXX0000001", tur:"1048 – 5035 s. Kanuna göre damga vergisi", vade:"2025-06-26", asil:526, gz:0, talep:null}],
+    {tah:"2025062301XXX0000001", tur:"0003 – Gelir vergisi stopajı (muhtasar)", vade:"2025-06-26", asil:278717.89, gz:0, talep:null},
+    {tah:"2025062301XXX0000001", tur:"1046 – Tevkifattan alınan damga vergisi", vade:"2025-06-26", asil:10903.93, gz:0, talep:null},
+    {tah:"2025062301XXX0000001", tur:"1048 – 5035 sayılı Kanuna göre damga vergisi", vade:"2025-06-26", asil:526, gz:0, talep:null}],
   yetkili:"",
   ekler:"Yatırım teşvik belgesi sureti\n2022 yılı ve sonrası toplam harcama özeti ve katkı hesaplama tablosu\n2022 yılı ve sonrası yapılan yatırımlar listesi\n2025 yılı Mayıs ayı muhtasar beyanname tahakkuk fişi"
 };
 const EMPTY = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), {
   unvan:"", vkn:"", vd:"", belgeNo:"", belgeTarih:"", yat:[{yil:null,acik:"",harcama:null,oran:null,manuel:null}],
-  dilTarih:"", donem:null, ikv:0, prior:0, beyDonem:"", beyTarih:"",
+  dilTarih:"", donem:null, ikv:null, prior:null, beyTur:"", beyDonem:"", beyTarih:"",
   vergi:[{tah:"",tur:"",vade:"",asil:null,gz:null,talep:null}], ekler:"Yatırım teşvik belgesi sureti"
 });
 
@@ -189,6 +189,15 @@ function vdBaslik(vd){
   if(s && !/vergi\s+dairesi/iu.test(s)) s+=" Vergi Dairesi";
   return (s||"…").toLocaleUpperCase("tr-TR")+" MÜDÜRLÜĞÜNE";
 }
+/* Terkin edilebilecek vergiler: KVK 32/A-8 ve 1 Seri No.lu KV Genel Tebliği 32.2.13 uyarınca KDV ve ÖTV hariç,
+   tahakkuk etmiş diğer vergi borçları. Kodlar GİB vergi türleri listesinden; harç, ceza, fon, faiz ve gecikme zammı kodları alınmadı. */
+const VERGI_TURLERI=[
+  ["0001","Yıllık gelir vergisi"],["0003","Gelir vergisi stopajı (muhtasar)"],["0010","Kurumlar vergisi"],
+  ["0011","Kurumlar vergisi stopajı"],["0012","Gelir vergisi (GMSİ)"],["0021","Banka muameleleri vergisi"],
+  ["0032","Gelir geçici vergi"],["0033","Kurum geçici vergi"],["0040","Damga vergisi (beyannameli)"],
+  ["1046","Tevkifattan alınan damga vergisi"],["1047","Damga vergisi"],["1048","5035 sayılı Kanuna göre damga vergisi"],
+  ["9034","Motorlu taşıtlar vergisi"]
+].map(([k,a])=>`${k} – ${a}`);
 const KDV_RE = /(kdv|ötv|otv|katma\s*değer|özel\s*tüketim|\b0015\b|\b4080\b|\b4081\b|\b9047\b)/i;
 
 function compute(S){
@@ -415,6 +424,12 @@ function beyDonemAyir(t){
   return null;
 }
 const beyDonemYaz=()=>S.beyYil&&S.beyAyNo?`${S.beyYil} yılı ${AYLAR[S.beyAyNo-1]} ayı`:"";
+function turSec(i){
+  const v=S.vergi[i].tur||"", eski=v && !VERGI_TURLERI.includes(v);
+  const opt=(k,t)=>`<option value="${esc(k)}"${k===v?" selected":""}>${esc(t)}</option>`;
+  return `<label class="f"><span>Vergi kodu / türü</span><select data-k="vergi.${i}.tur" data-t="text">${opt("","Vergi seçin")}`
+    +(eski?opt(v,`${v} (daha önce girilmiş)`):"")+VERGI_TURLERI.map(t=>opt(t,t)).join("")+`</select></label>`;
+}
 function yilSec(label,k){
   const v=getPath(k), son=new Date().getFullYear();
   const yillar=[]; for(let y=son;y>=2009;y--) yillar.push(y);
@@ -463,7 +478,7 @@ function renderForm(){
     ${field("Manuel katkı (TL)",`yat.${i}.manuel`,"num",'placeholder="Boşsa harcama × oran"')}</div>
     <div class="rc-foot"><span>Katkı <b id="yk${i}"></b> <em id="ys${i}"></em></span><button class="del" data-del="yat.${i}">Satırı sil</button></div></div>`).join("");
   $("fVergi").innerHTML = S.vergi.map((v,i)=>`<div class="rc">
-    <div class="rc-grid">${field("Tahakkuk no",`vergi.${i}.tah`)}${field("Vergi kodu / türü",`vergi.${i}.tur`)}
+    <div class="rc-grid">${field("Tahakkuk no",`vergi.${i}.tah`)}${turSec(i)}
     ${field("Vade",`vergi.${i}.vade`,"date")}${field("Asıl borç (TL)",`vergi.${i}.asil`,"num")}
     ${field("Gecikme zammı (TL)",`vergi.${i}.gz`,"num")}${field("Talep tutarı (TL)",`vergi.${i}.talep`,"num",'placeholder="Boşsa toplam borç"')}</div>
     <div class="rc-foot"><span>Talep <b id="vt${i}"></b> <em id="vs${i}"></em></span><button class="del" data-del="vergi.${i}">Satırı sil</button></div></div>`).join("");
@@ -475,7 +490,7 @@ document.addEventListener("click",e=>{
   const [arr,i]=d.split("."); S[arr].splice(+i,1); save(); renderForm(); update();
 });
 $("addYat").onclick=()=>{ S.yat.push({yil:S.donem,acik:"",harcama:null,oran:null,manuel:null}); save(); renderForm(); update(); };
-$("addVergi").onclick=()=>{ const p=S.vergi[S.vergi.length-1]; S.vergi.push({tah:p?.tah||"",tur:"",vade:p?.vade||"",asil:null,gz:0,talep:null}); save(); renderForm(); update(); };
+$("addVergi").onclick=()=>{ const p=S.vergi[S.vergi.length-1]; S.vergi.push({tah:p?.tah||"",tur:"",vade:p?.vade||"",asil:null,gz:null,talep:null}); save(); renderForm(); update(); };
 $("btnOrnek").onclick=()=>{ S=JSON.parse(JSON.stringify(DEFAULTS)); save(); renderForm(); update(); };
 $("btnYeni").onclick=()=>{ S=JSON.parse(JSON.stringify(EMPTY)); save(); renderForm(); update(); };
 
