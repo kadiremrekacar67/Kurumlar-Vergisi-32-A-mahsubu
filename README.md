@@ -1,0 +1,1 @@
+# Kurumlar-Vergisi-32-A-mahsubu
