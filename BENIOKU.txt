@@ -7,7 +7,7 @@ YAYINLAMA (birini seçin)
 
 A) Kendi sitenizde (ör. nextax.com.tr/terkin)
    1. Hosting panelinizde (cPanel dosya yöneticisi veya FTP) site kök dizinine "terkin" adlı bir klasör açın.
-   2. Bu klasördeki TÜM dosyaları (index.html, sw.js, manifest.webmanifest, jszip.min.js, icons klasörü) içine yükleyin.
+   2. Bu klasördeki TÜM dosyaları (index.html, sw.js, manifest.webmanifest, jszip.min.js, vergi-daireleri.js, icons klasörü) içine yükleyin.
    3. https://alanadiniz/terkin/ adresini açın. Sitenin HTTPS (SSL) ile çalışması gerekir.
 
 B) Ücretsiz barındırma (Netlify)
