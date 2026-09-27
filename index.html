@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yatırıma Katkı Terkin Programı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,650&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#EEF1EC;--sheet:#FBFCFA;--ink:#15302A;--muted:#5B6E67;--line:#CBD5CF;--inp:#F4F7F3;
+ --terkin:#B8862B;--vazgec:#D9B56B;--ikv:#7A93A6;--kalan:#DCE5DF;--stamp:#A8322A;--ok:#2F6B57;--docbg:#FFFFFF;--docink:#1a1a1a;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#101816;--sheet:#17221F;--ink:#E4ECE7;--muted:#95A8A0;--line:#2C3B36;--inp:#1D2A26;
+ --terkin:#D9A441;--vazgec:#8C7440;--ikv:#6F8CA3;--kalan:#24332E;--stamp:#E0675D;--ok:#5FA88C;--docbg:#F4F4F0;--docink:#1a1a1a}}
+:root[data-theme="dark"]{--paper:#101816;--sheet:#17221F;--ink:#E4ECE7;--muted:#95A8A0;--line:#2C3B36;--inp:#1D2A26;
+ --terkin:#D9A441;--vazgec:#8C7440;--ikv:#6F8CA3;--kalan:#24332E;--stamp:#E0675D;--ok:#5FA88C;--docbg:#F4F4F0;--docink:#1a1a1a}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 60px)}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:980px;margin:0 auto;padding:16px 16px 56px}
+h1,h2{font-family:Newsreader,Georgia,serif;font-weight:650;line-height:1.15;margin:0}
+h1{font-size:clamp(1.5rem,5vw,2.2rem)}
+h2{font-size:1.2rem;margin-bottom:10px}
+.sub{color:var(--muted);margin:4px 0 0;font-size:.9rem}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);display:flex;gap:4px;padding:10px 0;margin-top:12px;border-bottom:1px solid var(--line)}
+nav button{flex:1;font:inherit;font-weight:700;background:transparent;border:0;border-radius:8px;padding:9px 6px;color:var(--muted);cursor:pointer}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--sheet)}
+section{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:16px}
+.ledger{border-radius:14px;padding:18px}
+.toprow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.big{font-family:Newsreader,Georgia,serif;font-size:clamp(2rem,9vw,3.1rem);font-weight:650;display:block;line-height:1.1}
+.big.neg{color:var(--stamp)}
+.muted{color:var(--muted);font-size:.88rem}
+.badge{font-weight:700;font-size:.85rem;padding:5px 10px;border-radius:999px;border:2px solid}
+.badge.ok{color:var(--ok);border-color:var(--ok)} .badge.bad{color:var(--stamp);border-color:var(--stamp)}
+.bar{display:flex;height:30px;border-radius:6px;overflow:hidden;margin:14px 0 12px;background:var(--kalan)}
+.bar span{height:100%;transition:width .45s ease}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;font-size:.86rem}
+.legend div{display:flex;gap:9px}
+.sw{width:12px;height:12px;border-radius:3px;margin-top:4px;flex:none}
+.legend strong{display:block;font-size:.98rem}
+.grid2{display:grid;gap:0 16px}
+@media (min-width:760px){.grid2{grid-template-columns:1fr 1fr}}
+.calc{width:100%;border-collapse:collapse;font-size:.9rem}
+.calc td{padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.calc td:first-child{width:30px;font-feature-settings:"liga" 0,"calt" 0,"dlig" 0;color:var(--muted);font-weight:700}
+.calc td:last-child{text-align:right;white-space:nowrap;font-weight:700}
+.calc tr.k td{color:var(--terkin)} .calc tr.neg td:last-child{color:var(--stamp)}
+.checks{list-style:none;margin:0;padding:0}
+.checks li{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.checks li:last-child{border-bottom:0}
+.checks p{margin:1px 0;color:var(--muted);font-size:.88rem} .checks small{color:var(--muted);font-size:.75rem}
+.mark{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;border:2px solid}
+.mark.ok{color:var(--ok);border-color:var(--ok)} .mark.bad{color:var(--stamp);border-color:var(--stamp)} .mark.warn{color:var(--terkin);border-color:var(--terkin)}
+.fgrid{display:grid;grid-template-columns:1fr;gap:0 14px}
+@media (min-width:600px){.fgrid{grid-template-columns:1fr 1fr}}
+label.f{display:block;margin-top:10px}
+label.f span{display:block;font-size:.8rem;color:var(--muted);margin-bottom:3px}
+input,textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--inp);border:1px solid var(--line);border-radius:6px;padding:9px 10px}
+textarea{min-height:110px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--terkin);outline-offset:2px}
+details summary{cursor:pointer;font-weight:700;padding:4px 0}
+.rc{border:1px solid var(--line);border-radius:8px;padding:4px 12px 10px;margin-top:10px;background:var(--paper)}
+.rc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.rc-grid label.f:nth-child(2){grid-column:span 1}
+@media (min-width:700px){.rc-grid{grid-template-columns:repeat(3,1fr)}}
+.rc-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;font-size:.88rem;flex-wrap:wrap}
+.rc-foot em{font-style:normal;color:var(--muted)} .rc-foot em.warn{color:var(--terkin)} .rc-foot em.bad{color:var(--stamp);font-weight:700}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);padding:8px 12px}
+button.primary{background:var(--ink);color:var(--sheet);border-color:var(--ink);font-weight:700;padding:11px 16px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.del{color:var(--stamp);padding:5px 10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.sum{font-size:.88rem;color:var(--muted);margin-top:10px}
+.warnbox{border:2px solid var(--stamp);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:.9rem}
+.doc{background:var(--docbg);color:var(--docink);font-family:"Times New Roman",Times,serif;font-size:14px;line-height:1.5;padding:28px 24px;border-radius:4px;box-shadow:0 1px 0 var(--line);max-width:760px;margin:12px auto 0}
+.doc p.in{text-indent:2em} .doc ul,.doc ol{margin:4px 0 8px;padding-left:28px} .doc ul{list-style:"– "}
+.doc hr.pb{border:0;border-top:2px dashed #aaa;margin:28px -24px}
+.doc-t{border-collapse:collapse;width:100%;font-size:12.5px}
+.doc-t td,.doc-t th{border:1px solid #888;padding:4px 6px;vertical-align:middle} .doc-t th{background:#E7ECE9}
+.scroll{overflow-x:auto}
+@media (prefers-reduced-motion:reduce){.bar span{transition:none}}
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#15302A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Terkin">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<script src="jszip.min.js"></script>
+</head>
+<body>
+<main>
+<header>
+  <h1>Yatırıma katkı terkin programı</h1>
+  <p class="sub">KVK 32/A-8 ve 23 Seri No.lu KV Genel Tebliği 32.2.13 kapsamında limit hesabı, uygunluk kontrolü ve dilekçe.</p>
+</header>
+<nav role="tablist">
+  <button role="tab" aria-selected="true" aria-controls="tPanel">Panel</button>
+  <button role="tab" aria-selected="false" aria-controls="tVeri">Veriler</button>
+  <button role="tab" aria-selected="false" aria-controls="tDil">Dilekçe</button>
+</nav>
+
+<div role="tabpanel" id="tPanel">
+  <section class="ledger">
+    <div class="toprow"><div><strong id="hUnvan"></strong><div class="muted" id="hBelge"></div></div><span id="sonuc" class="badge"></span></div>
+    <p class="muted" style="margin:14px 0 2px">Bu dilekçeden sonra kalan terkin hakkı</p>
+    <span class="big" id="kalan"></span>
+    <p class="muted" id="kalanNot" style="margin:4px 0 0"></p>
+    <div class="bar" role="img" aria-label="Hak edilen yatırıma katkı tutarının dağılımı"><span id="bIkv" style="background:var(--ikv)"></span><span id="bTer" style="background:var(--terkin)"></span><span id="bVaz" style="background:var(--vazgec)"></span></div>
+    <div class="legend">
+      <div><i class="sw" style="background:var(--ikv)"></i><span>İndirimli KV ile kullanılan<strong id="lIkv"></strong></span></div>
+      <div><i class="sw" style="background:var(--terkin)"></i><span>Terkin edilen<strong id="lTer"></strong></span></div>
+      <div><i class="sw" style="background:var(--vazgec)"></i><span>Terkin nedeniyle vazgeçilen<strong id="lVaz"></strong></span></div>
+      <div><i class="sw" style="background:var(--kalan);border:1px solid var(--line)"></i><span>Devreden katkı<strong id="lDev"></strong></span></div>
+    </div>
+    <p class="muted" id="sure" style="margin:12px 0 0"></p>
+  </section>
+  <div class="grid2">
+    <section><h2>Ek-1 hesaplaması</h2><table class="calc"><tbody id="ek1"></tbody></table></section>
+    <section><h2>Mevzuata uygunluk</h2><ul class="checks" id="checks"></ul></section>
+  </div>
+</div>
+
+<div role="tabpanel" id="tVeri" hidden>
+  <div class="row"><button id="btnOrnek">Örnek veriyi yükle</button><button id="btnYeni">Yeni mükellef</button></div>
+  <section><h2>Mükellef ve belge</h2><div class="fgrid" id="fMukellef"></div></section>
+  <section><h2>Dilekçe ve beyanname</h2><div class="fgrid" id="fDilekce"></div></section>
+  <section><h2>Yatırım harcamaları</h2>
+    <p class="muted" style="margin:0">Harcamaları yıl bazında girin. Katkı tutarı biliniyorsa "Manuel katkı" alanına yazın; boşsa harcama × oran kullanılır.</p>
+    <div id="fYat"></div><div class="row"><button id="addYat">Harcama ekle</button></div><p class="sum" id="sumYat"></p></section>
+  <section><h2>Terkini talep edilen vergiler</h2>
+    <div id="fVergi"></div><div class="row"><button id="addVergi">Vergi ekle</button></div><p class="sum" id="sumVergi"></p></section>
+  <section><h2>Ekler</h2><label class="f"><span>Her satır bir ek. "Terkin hesaplama tablosu (Ek-1)" otomatik eklenir.</span><textarea id="fEkler"></textarea></label></section>
+  <section><details><summary>Mevzuat parametreleri</summary><p class="muted">Yalnızca mevzuat değişirse düzenleyin.</p><div class="fgrid" id="fParam"></div></details></section>
+</div>
+
+<div role="tabpanel" id="tDil" hidden>
+  <section>
+    <div id="docWarn" class="warnbox" hidden></div>
+    <div class="row"><button class="primary" id="btnWord">Word olarak indir</button><span class="muted" id="dlMsg" aria-live="polite"></span></div>
+    <p class="muted" style="margin:8px 0 0">Dilekçe ve Ek-1, girdiğiniz verilerden otomatik oluşur. İmza ve kaşeden önce içeriği kontrol edin.</p>
+  </section>
+  <div class="doc" id="docPreview"></div>
+</div>
+<p class="muted" style="margin-top:24px;max-width:70ch">Veriler yalnızca bu tarayıcıda saklanır. Hesaplamalar mevzuat özetine dayanır; uygulamadan önce güncel mevzuat ve vergi dairesi uygulamasıyla teyit edin.</p>
+</main>
+<script>
+/* ===== core: pure calculation + document model ===== */
+const DEFAULTS = {
+  tip:"kurum", unvan:"Örnek Sanayi ve Ticaret A.Ş.", vkn:"1234567890",
+  vd:"Büyükçekmece Vergi Dairesi", belgeNo:"500000", belgeTarih:"2022-06-28",
+  tor:10, ust:50, kat:1, beyanAy:4, sure:2, basYil:2022,
+  yat:[{yil:2025, acik:"2022 ve sonrası toplam (Ek-3 özeti)", harcama:16799574.33, oran:null, manuel:4318576.09}],
+  dilTarih:"2025-06-25", donem:2025, ikv:0, prior:0,
+  beyTur:"muhtasar", beyDonem:"2025 yılı Mayıs ayı", beyTarih:"2025-06-23",
+  vergi:[
+    {tah:"2025062301XXX0000001", tur:"003 STPJ – Gelir vergisi stopajı", vade:"2025-06-26", asil:278717.89, gz:0, talep:null},
+    {tah:"2025062301XXX0000001", tur:"1046 TDMG – Damga vergisi", vade:"2025-06-26", asil:10903.93, gz:0, talep:null},
+    {tah:"2025062301XXX0000001", tur:"1048 – 5035 s. Kanuna göre damga vergisi", vade:"2025-06-26", asil:526, gz:0, talep:null}],
+  yetkili:"",
+  ekler:"Yatırım teşvik belgesi sureti\n2022 yılı ve sonrası toplam harcama özeti ve katkı hesaplama tablosu\n2022 yılı ve sonrası yapılan yatırımlar listesi\n2025 yılı Mayıs ayı muhtasar beyanname tahakkuk fişi"
+};
+const EMPTY = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), {
+  unvan:"", vkn:"", vd:"", belgeNo:"", belgeTarih:"", yat:[{yil:null,acik:"",harcama:null,oran:null,manuel:null}],
+  dilTarih:"", donem:null, ikv:0, prior:0, beyDonem:"", beyTarih:"",
+  vergi:[{tah:"",tur:"",vade:"",asil:null,gz:null,talep:null}], ekler:"Yatırım teşvik belgesi sureti"
+});
+
+const n = v => (typeof v==="number" && isFinite(v)) ? v : 0;
+function parseNum(v){
+  if(v===null||v===undefined) return null;
+  let s=String(v).trim().replace(/\s|TL/gi,""); if(!s) return null;
+  if(s.includes(",")) s=s.replace(/\./g,"").replace(",",".");
+  else if(/^-?\d{1,3}(\.\d{3})+$/.test(s)) s=s.replace(/\./g,"");
+  const x=parseFloat(s); return isNaN(x)?null:x;
+}
+const tl = (x,d=2) => n(x).toLocaleString("tr-TR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const TL = x => tl(x)+" TL";
+const trDate = iso => iso ? iso.split("-").reverse().join(".") : "…";
+const isoOf = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+function vdBaslik(vd){
+  let s=String(vd||"").trim().replace(/\s+/g," ");
+  s=s.replace(/\s*(müdürlüğüne|müdürlüğü|mudurlugune|mudurlugu)\.?\s*$/iu,"").trim();
+  s=s.replace(/\s*(v\.\s?d\.?|vd)\s*$/iu," Vergi Dairesi").trim();
+  if(s && !/vergi\s+dairesi/iu.test(s)) s+=" Vergi Dairesi";
+  return (s||"…").toLocaleUpperCase("tr-TR")+" MÜDÜRLÜĞÜNE";
+}
+const KDV_RE = /(kdv|ötv|otv|katma\s*değer|özel\s*tüketim|\b0015\b|\b4080\b|\b4081\b|\b9047\b)/i;
+
+function compute(S){
+  const R={};
+  R.yat = S.yat.map(y=>{
+    const empty = y.yil==null && y.harcama==null && y.manuel==null;
+    const katki = y.manuel!=null ? y.manuel : n(y.harcama)*n(y.oran)/100;
+    const kapsam = !empty && y.yil!=null && y.yil>=S.basYil && S.donem!=null && y.yil<=S.donem;
+    return {empty, katki, kapsam};
+  });
+  R.a = S.yat.reduce((s,y,i)=>s+(R.yat[i].kapsam?n(y.harcama):0),0);
+  R.b = S.yat.reduce((s,y,i)=>s+(R.yat[i].kapsam?R.yat[i].katki:0),0);
+  R.c = R.b*n(S.tor)/100;
+  R.d = n(S.ikv);
+  R.e = Math.max(0,R.b-R.d)*n(S.ust)/100;
+  R.f = Math.max(0,Math.min(R.c,R.e));
+  R.prior = n(S.prior);
+  R.vergi = S.vergi.map(v=>{
+    const empty = !v.tur && v.asil==null && v.talep==null;
+    const toplam = n(v.asil)+n(v.gz);
+    const talep = v.talep!=null ? v.talep : toplam;
+    const kdv = KDV_RE.test(v.tur||"");
+    const asim = talep > toplam+0.005;
+    const vadeSonra = !!(v.vade && S.dilTarih && S.dilTarih>v.vade);
+    const durum = empty?"":kdv?"KDV/ÖTV kapsam dışı":asim?"Talep borcu aşıyor":vadeSonra?"Vade sonrası":"✓";
+    return {empty,toplam,talep,kdv,asim,vadeSonra,durum};
+  });
+  R.bu = R.vergi.reduce((s,v)=>s+(v.empty?0:v.talep),0);
+  R.asil = S.vergi.reduce((s,v,i)=>s+(R.vergi[i].empty?0:n(v.asil)),0);
+  R.gz = S.vergi.reduce((s,v,i)=>s+(R.vergi[i].empty?0:n(v.gz)),0);
+  R.toplamBorc = R.asil+R.gz;
+  R.g = R.prior+R.bu;
+  R.kullanilabilir = R.f-R.prior;
+  R.kalan = R.f-R.g;
+  R.vaz = R.g*n(S.kat);
+  R.devreden = R.b-R.d-R.g-R.vaz;
+  if(S.donem!=null){
+    R.bas = `${S.donem}-01-01`;
+    R.son = isoOf(new Date(S.donem+1, n(S.beyanAy)-1+n(S.sure)+1, 0));
+  }
+  R.checks = checks(S,R);
+  R.ok = !R.checks.some(c=>c.s==="bad");
+  return R;
+}
+
+function checks(S,R){
+  const C=[], L=R.vergi.filter(v=>!v.empty);
+  C.push(L.length && R.bu>0
+    ? {s:"ok",h:"Talep edilen vergi var",d:"Dilekçe",p:`${L.length} vergi satırı, toplam ${TL(R.bu)}.`}
+    : {s:"bad",h:"Talep edilen vergi yok",d:"Dilekçe",p:"En az bir vergi satırı girin."});
+  C.push(R.bu<=R.kullanilabilir+0.005
+    ? {s:"ok",h:"Talep limit dahilinde",d:"KVK 32/A-8; Tebliğ 32.2.13",p:`Kullanılabilir limit ${TL(R.kullanilabilir)}.`}
+    : {s:"bad",h:"Talep limiti aşıyor",d:"KVK 32/A-8; Tebliğ 32.2.13",p:`Aşım ${TL(R.bu-R.kullanilabilir)}. Talebi azaltın.`});
+  const k=S.vergi.filter((v,i)=>R.vergi[i].kdv);
+  C.push(k.length ? {s:"bad",h:"KDV veya ÖTV borcu listede",d:"KVK 32/A-8",p:"Kapsam dışı: "+k.map(v=>v.tur).join(", ")}
+    : {s:"ok",h:"KDV ve ÖTV dışı borçlar",d:"KVK 32/A-8",p:"Terkin kapsamındaki vergi türleri."});
+  const a=R.vergi.filter(v=>v.asim).length;
+  C.push(a ? {s:"bad",h:"Talep borçtan fazla",d:"Tebliğ 32.2.13",p:`${a} satırda talep, tahakkuk eden borcu aşıyor.`}
+    : {s:"ok",h:"Talep tahakkuk eden borç kadar",d:"Tebliğ 32.2.13",p:"Her satırda talep, borç tutarını aşmıyor."});
+  const sureOk = S.dilTarih && R.bas && S.dilTarih>=R.bas && S.dilTarih<=R.son;
+  C.push(sureOk ? {s:"ok",h:"Talep süresi içinde",d:"KVK 32/A-8",p:`Talep aralığı ${trDate(R.bas)} – ${trDate(R.son)}.`}
+    : {s:"bad",h:"Talep süresi dışında",d:"KVK 32/A-8",p:R.bas?`Talep aralığı ${trDate(R.bas)} – ${trDate(R.son)}.`:"Dilekçe tarihi ve hesap dönemini girin."});
+  C.push(S.donem!=null && S.donem>=S.basYil ? {s:"ok",h:`Hesap dönemi ${S.basYil} ve sonrası`,d:"7338 s. Kanun",p:"Uygulama kapsamındaki dönem."}
+    : {s:"bad",h:"Hesap dönemi uygulama dışı",d:"7338 s. Kanun",p:`Düzenleme ${S.basYil} ve sonrası harcamalara uygulanır.`});
+  C.push(R.devreden>=-0.005 ? {s:"ok",h:"Katkı tutarı yeterli",d:"KVK 32/A-8",p:"İKV + terkin + vazgeçilen, hak edilen katkıyı aşmıyor."}
+    : {s:"bad",h:"Katkı tutarı yetersiz",d:"KVK 32/A-8",p:`Eksik ${TL(-R.devreden)}.`});
+  const vs=R.vergi.filter(v=>v.vadeSonra).length;
+  C.push(vs ? {s:"warn",h:"Dilekçe vadeden sonra",d:"Gecikme zammı riski",p:`${vs} satırda vade geçmiş; gecikme zammı doğabilir.`}
+    : {s:"ok",h:"Dilekçe vadeden önce",d:"Gecikme zammı riski",p:"Vadesi geçmiş satır yok."});
+  const dis=R.yat.filter(y=>!y.empty && !y.kapsam).length;
+  C.push(dis ? {s:"warn",h:"Hesaba katılmayan harcama var",d:"Tebliğ 32.2.13",p:`${dis} harcama satırı yılı nedeniyle kapsam dışı.`}
+    : {s:"ok",h:"Tüm harcamalar kapsamda",d:"Tebliğ 32.2.13",p:"Girilen harcamaların tamamı limite dahil."});
+  const tahR=L.length?S.vergi.filter((v,i)=>!R.vergi[i].empty):[];
+  const kisa=tahR.filter(v=>!v.tah||String(v.tah).trim().length<16).length;
+  const farkli=new Set(tahR.map(v=>String(v.tah||"").trim()).filter(Boolean)).size;
+  C.push(kisa ? {s:"warn",h:"Tahakkuk numarası eksik görünüyor",d:"Tahakkuk fişi",p:`${kisa} satırda tahakkuk numarası boş veya kısa (ör. 2025062301XXX0000001 biçiminde olmalı).`}
+    : farkli>1 ? {s:"warn",h:"Farklı tahakkuk numaraları",d:"Tahakkuk fişi",p:`${farkli} farklı numara var; aynı beyannamenin vergileri genellikle tek tahakkuk numarasındadır.`}
+    : {s:"ok",h:"Tahakkuk numarası tam",d:"Tahakkuk fişi",p:"Tüm satırlarda tahakkuk numarası girilmiş."});
+  const vkn=String(S.vkn||"").replace(/\D/g,"");
+  if(S.tip!=="sahis" && vkn.length===11) C.push({s:"warn",h:"Numara TCKN'ye benziyor",d:"Mükellef bilgisi",p:"Şirketler için 10 haneli VKN girilir. Gerçek kişiyse mükellef türünü değiştirin."});
+  else if(vkn.length!==10 && vkn.length!==11) C.push({s:"warn",h:"VKN / TCKN hatalı görünüyor",d:"Mükellef bilgisi",p:"VKN 10, TCKN 11 hanelidir."});
+  if(S.tip!=="sahis" && !String(S.yetkili||"").trim()) C.push({s:"warn",h:"Yetkili adı girilmedi",d:"Dilekçe",p:"İmza bölümü boş bir satırla oluşturulacak."});
+  if(S.tip==="sahis") C.push({s:"warn",h:"Gerçek kişi mükellef: dayanağı teyit edin",d:"KVK 32/A-8",p:"Düzenleme kurumlar vergisi mükellefleri için yapılmıştır. Gelir vergisi mükellefleri için uygulanabilirliği ve talep süresi ayrıca teyit edilmelidir."});
+  return C;
+}
+
+/* ---- document model: shared by preview and .docx ---- */
+const P=(runs,o={})=>({t:"p",runs:typeof runs==="string"?[{text:runs}]:runs,...o});
+function dilekceBlocks(S,R){
+  const L=S.vergi.map((v,i)=>({v,r:R.vergi[i]})).filter(x=>!x.r.empty);
+  const tahs=[...new Set(L.map(x=>x.v.tah).filter(Boolean))];
+  const sh=S.tip==="sahis";
+  const W=sh?{biz:"tarafımca",borc:"vergi borcumun",arz:"arz ederim",say:"Saygılarımla,",imza:"İmza"}:{biz:"şirketimiz tarafından",borc:"vergi borcumuzun",arz:"arz ederiz",say:"Saygılarımızla,",imza:"Kaşe / İmza"};
+  const cizgi="........................................";
+  const ekler=["Terkin hesaplama tablosu (Ek-1)",...String(S.ekler||"").split("\n").map(s=>s.trim()).filter(Boolean)];
+  const B=[
+    P([{text:"T.C.",b:1}],{align:"center",after:0}),
+    P([{text:vdBaslik(S.vd),b:1}],{align:"center",after:240}),
+    P(trDate(S.dilTarih),{align:"right"}),
+    P([{text:"Konu: ",b:1},{text:"7338 sayılı Kanun'un 60. maddesiyle 5520 sayılı Kurumlar Vergisi Kanunu'nun 32/A maddesine eklenen sekizinci fıkra ve 23 Seri No.lu Kurumlar Vergisi Genel Tebliği uyarınca yatırıma katkı tutarının diğer vergi borçlarından terkini talebimiz hakkında."}],{justify:1}),
+    P(sh?`Dairenizin ${S.vkn||"…"} vergi kimlik numaralı mükellefi ${S.unvan||"…"} olarak, adıma ${trDate(S.belgeTarih)} tarih ve ${S.belgeNo||"…"} sayılı yatırım teşvik belgesi düzenlenmiştir.`:`Dairenizin ${S.vkn||"…"} vergi kimlik numaralı ${S.unvan||"…"} unvanlı mükellefiyiz. Şirketimiz adına ${trDate(S.belgeTarih)} tarih ve ${S.belgeNo||"…"} sayılı yatırım teşvik belgesi düzenlenmiştir.`,{justify:1,indent:1}),
+    P([{text:"5520 sayılı Kurumlar Vergisi Kanunu'nun 32/A maddesine 7338 sayılı Kanun'un 60. maddesiyle eklenen sekizinci fıkra ile, yatırım teşvik belgesi kapsamında "},{text:`1.1.${S.basYil}`},{text:" tarihinden itibaren yapılan yatırım harcamalarına isabet eden "},{text:`yatırıma katkı tutarının %${tl(S.tor,0)}'luk kısmının`,b:1},{text:", "},{text:"özel tüketim vergisi ve katma değer vergisi hariç olmak üzere",b:1},{text:" tahakkuk etmiş "},{text:"diğer vergi borçlarından terkin",b:1},{text:" edilmek suretiyle kullanılmasına imkân tanınmıştır."}],{justify:1,indent:1}),
+    P("23 Seri No.lu Kurumlar Vergisi Genel Tebliği ile 1 Seri No.lu Kurumlar Vergisi Genel Tebliği'ne eklenen 32.2.13 numaralı bölümde belirtildiği üzere;",{justify:1,indent:1}),
+    {t:"list",items:[
+      "Talep, ilgili hesap dönemi başından kurumlar vergisi beyannamesinin verilmesi gereken ayı takip eden ikinci ayın sonuna kadar yapılmalıdır.",
+      `Terkin edilecek tutar, hak kazanılan yatırıma katkı tutarının %${tl(S.tor,0)}'unu geçemez.`,
+      `Terkin talep edilecek tutar, hak kazanılan yatırıma katkı tutarından indirimli kurumlar vergisi yoluyla kullanılan katkı tutarı düşüldükten sonra kalan tutarın %${tl(S.ust,0)}'sini aşamaz.`,
+      "Diğer vergi borçlarından terkin edilen tutarın bir katı kadar yatırıma katkı tutarından vazgeçilmiş sayılır."]},
+    P(`Bu çerçevede, ${W.biz} ${S.beyDonem||"…"} dönemine ilişkin olarak ${trDate(S.beyTarih)} tarihinde verilen ${S.beyTur||"…"} beyannamesine istinaden tahakkuk eden ve ${tahs.join(", ")||"…"} ${tahs.length>1?"tahakkuk numaraları":"tahakkuk numarası"} ile kayıtlı bulunan;`,{justify:1,indent:1}),
+    {t:"list",items:L.map(x=>[{text:x.v.tur||"…",b:1},{text:`: ${TL(x.r.talep)}`}])},
+    P([{text:"olmak üzere toplam "},{text:TL(R.bu),b:1},{text:` tutarındaki ${W.borc}, ${S.belgeNo||"…"} sayılı yatırım teşvik belgesi kapsamında hak kazanılan yatırıma katkı tutarından terkin edilmek suretiyle ödenmiş sayılması hususunda gereğinin yapılmasını ${W.arz}.`}],{justify:1}),
+    P(`Terkine ilişkin hesaplama Ek-1'de sunulmuştur. Buna göre terkin edilebilecek azami tutar ${TL(R.f)} olup, bu dilekçe dahil terkin yoluyla kullanılan toplam tutar ${TL(R.g)}'dir.`,{justify:1,indent:1}),
+    P(W.say,{align:"right",before:240,after:0}),
+    P([{text:S.unvan||"…",b:1}],{align:"right",after:0}),
+    ...(sh?[]:[P(String(S.yetkili||"").trim()||cizgi,{align:"right",after:0})]),
+    P(W.imza,{align:"right",after:360}),
+    P([{text:"Ekler:",b:1}],{after:60}),
+    {t:"list",ordered:1,items:ekler},
+    {t:"break"},
+    P([{text:"EK-1: TERKİN HESAPLAMA TABLOSU",b:1}],{align:"center"}),
+    P(`Mükellef: ${S.unvan||"…"}   VKN: ${S.vkn||"…"}`,{after:0}),
+    P(`Teşvik belgesi tarihi: ${trDate(S.belgeTarih)}   Belge numarası: ${S.belgeNo||"…"}   Hesap dönemi: ${S.donem??"…"}`),
+    {t:"table",widths:[700,6600,2300],rows:[
+      ["(a)",`Belge kapsamında ${S.basYil} yılı ve sonrası kayıtlı toplam yatırım tutarı`,TL(R.a)],
+      ["(b)",`Belge kapsamında ${S.basYil} yılı ve sonrası hak edilen toplam yatırıma katkı tutarı`,TL(R.b)],
+      ["(c)",`Hak edilen yatırıma katkı tutarının %${tl(S.tor,0)}'u (b × %${tl(S.tor,0)})`,TL(R.c)],
+      ["(d)","Dilekçe tarihi itibarıyla indirimli kurumlar vergisi yoluyla kullanılan yatırıma katkı tutarı",TL(R.d)],
+      ["(e)",`Hak edilen katkıdan indirimli KV ile kullanılan katkı düşüldükten sonra kalan tutarın %${tl(S.ust,0)}'si [(b − d) × %${tl(S.ust,0)}]`,TL(R.e)],
+      ["(f)","Terkin edilebilecek en fazla tutar [(c) ve (e)'den küçük olan]",TL(R.f)],
+      ["(g)","Dilekçe tarihi itibarıyla vergi borçlarından terkin yoluyla kullanılan yatırıma katkı tutarı (bu dilekçe dahil)",TL(R.g)],
+      ["","   Önceki dilekçelerle terkin edilen",TL(R.prior)],
+      ["","   Bu dilekçe ile talep edilen",TL(R.bu)],
+      ["","Kalan terkin hakkı (f − g)",TL(R.kalan)],
+      ["","Terkin nedeniyle vazgeçilen yatırıma katkı tutarı (g × 1)",TL(R.vaz)],
+      ["","Yatırıma katkı tutarından toplam düşülen (terkin + vazgeçilen)",TL(R.g+R.vaz)],
+      ["","Devreden yatırıma katkı tutarı (b − d − g − vazgeçilen)",TL(R.devreden)]
+    ].map(r=>r.map((c,j)=>({text:c,b:j===0||(j===1&&/^\((f|g)\)|^Kalan/.test(r[0]+r[1])),align:j===2?"right":"left"})))},
+    P([{text:"MAHSUBU TALEP EDİLEN VERGİLER",b:1}],{before:240}),
+    {t:"table",header:1,widths:[2550,2450,1150,1250,950,1250],rows:[
+      ["Tahakkuk no","Vergi türü","Vade","Asıl borç","Gecikme zammı","Talep tutarı"].map(t=>({text:t,b:1})),
+      ...L.map(x=>[x.v.tah||"",x.v.tur||"",trDate(x.v.vade),tl(x.v.asil),tl(x.v.gz),tl(x.r.talep)].map((t,j)=>({text:t,align:j>=3?"right":"left"}))),
+      ["","Toplam","",tl(R.asil),tl(R.gz),tl(R.bu)].map((t,j)=>({text:t,b:1,align:j>=3?"right":"left"}))
+    ]}
+  ];
+  return B;
+}
+
+/* ---- WordprocessingML ---- */
+const xe = s => String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const RPR = (b,sz=22)=>`<w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>${b?"<w:b/>":""}<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr>`;
+const run = r => `<w:r>${RPR(r.b)}<w:t xml:space="preserve">${xe(r.text)}</w:t></w:r>`;
+function para(runs,o={}){
+  const jc = o.justify?"both":o.align==="center"?"center":o.align==="right"?"right":"left";
+  const sp = `<w:spacing w:before="${o.before??0}" w:after="${o.after??120}" w:line="276" w:lineRule="auto"/>`;
+  const ind = o.indent?`<w:ind w:firstLine="709"/>`:o.hang?`<w:ind w:left="${o.hang}" w:hanging="283"/>`:"";
+  return `<w:p><w:pPr>${sp}${ind}<w:jc w:val="${jc}"/></w:pPr>${runs.map(run).join("")}</w:p>`;
+}
+const BRD = `<w:tblBorders>${["top","left","bottom","right","insideH","insideV"].map(k=>`<w:${k} w:val="single" w:sz="4" w:space="0" w:color="808080"/>`).join("")}</w:tblBorders>`;
+function toXml(blocks){
+  const body = blocks.map(b=>{
+    if(b.t==="p") return para(b.runs,b);
+    if(b.t==="break") return `<w:p><w:r><w:br w:type="page"/></w:r></w:p>`;
+    if(b.t==="list") return b.items.map((it,i)=>{
+      const runs = typeof it==="string"?[{text:it}]:it;
+      return para([{text:(b.ordered?`${i+1}. `:"– ")},...runs],{hang:709,after:60,justify:1});
+    }).join("");
+    if(b.t==="table"){
+      const grid = b.widths.map(w=>`<w:gridCol w:w="${w}"/>`).join("");
+      const rows = b.rows.map((r,ri)=>`<w:tr>${ri===0&&b.header?"<w:trPr><w:tblHeader/></w:trPr>":""}${r.map((c,j)=>`<w:tc><w:tcPr><w:tcW w:w="${b.widths[j]}" w:type="dxa"/>${ri===0&&b.header?'<w:shd w:val="clear" w:color="auto" w:fill="E7ECE9"/>':""}<w:vAlign w:val="center"/></w:tcPr>${para([{text:c.text,b:c.b}],{align:c.align,after:0}).replace("<w:pPr>",'<w:pPr><w:spacing w:before="40" w:after="40"/>').replace(/<w:spacing w:before="0"[^>]*\/>/,"")}</w:tc>`).join("")}</w:tr>`).join("");
+      return `<w:tbl><w:tblPr><w:tblW w:w="${b.widths.reduce((a,c)=>a+c,0)}" w:type="dxa"/>${BRD}<w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="80" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${grid}</w:tblGrid>${rows}</w:tbl>`;
+    }
+    return "";
+  }).join("");
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+}
+async function buildDocx(JSZipLib,blocks){
+  const z=new JSZipLib();
+  z.file("[Content_Types].xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`);
+  z.file("_rels/.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+  z.file("word/document.xml",toXml(blocks));
+  return z.generateAsync({type:"uint8array"});
+}
+if(typeof module!=="undefined") module.exports={DEFAULTS,compute,dilekceBlocks,buildDocx,toXml};
+if(typeof module!=="undefined") module.exports.vdBaslik=vdBaslik;
+
+/* ===== UI ===== */
+const KEY="terkin-app-v1";
+let S; try{ S=JSON.parse(localStorage.getItem(KEY)) }catch(e){}
+if(!S||!S.vergi) S=JSON.parse(JSON.stringify(DEFAULTS));
+if(!S.tip) S.tip="kurum";
+const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(S)) }catch(e){} };
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let R=compute(S);
+
+/* tabs */
+document.querySelectorAll("[role=tab]").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll("[role=tab]").forEach(x=>x.setAttribute("aria-selected",x===t));
+  document.querySelectorAll("[role=tabpanel]").forEach(p=>p.hidden=p.id!==t.getAttribute("aria-controls"));
+  window.scrollTo({top:0});
+}));
+
+/* generic binding: data-k="path" data-t="num|int|date|text" */
+function getPath(p){ return p.split(".").reduce((o,k)=>o?.[k],S) }
+function setPath(p,v){ const ks=p.split("."), last=ks.pop(); ks.reduce((o,k)=>o[k],S)[last]=v }
+function shown(v,t){ if(v==null) return ""; if(t==="num") return tl(v); return v }
+function field(label,k,t="text",extra=""){
+  return `<label class="f"><span>${label}</span><input data-k="${k}" data-t="${t}" value="${esc(shown(getPath(k),t))}" ${t==="date"?'type="date"':""} ${t==="num"||t==="int"?'inputmode="decimal"':""} ${extra}></label>`;
+}
+document.addEventListener("change",e=>{
+  const el=e.target; if(!el.dataset.k) return;
+  const t=el.dataset.t; let v=el.value;
+  if(t==="num") v=parseNum(v); else if(t==="int"){ v=parseInt(v); if(isNaN(v)) v=null; }
+  setPath(el.dataset.k,v);
+  if(t==="num") el.value=shown(v,t);
+  save(); update();
+});
+
+function renderForm(){
+  $("fMukellef").innerHTML = `<label class="f"><span>Mükellef türü</span><select data-k="tip" data-t="text"><option value="kurum"${S.tip!=="sahis"?" selected":""}>Kurum (şirket)</option><option value="sahis"${S.tip==="sahis"?" selected":""}>Gerçek kişi / şahıs işletmesi</option></select></label>`+field("Unvan / ad soyad","unvan")+field("VKN (şirket 10, şahıs TCKN 11 hane)","vkn","text",'inputmode="numeric"')+field("Vergi dairesi","vd","text",'placeholder="ör. Küçükçekmece Vergi Dairesi"')
+    +field("Teşvik belgesi no","belgeNo")+field("Teşvik belgesi tarihi","belgeTarih","date");
+  $("fParam").innerHTML = field("Terkin oranı (%)","tor","num")+field("Üst sınır oranı (%)","ust","num")+field("Vazgeçme katsayısı","kat","num")
+    +field("KV beyannamesi ayı","beyanAy","int")+field("Talep süresi (ay)","sure","int")+field("Uygulama başlangıç yılı","basYil","int");
+  $("fDilekce").innerHTML = field("Dilekçe tarihi","dilTarih","date")+field("Katkının hesap dönemi (yıl)","donem","int")
+    +field("İndirimli KV ile kullanılan katkı (TL)","ikv","num")+field("Önceki dilekçelerle terkin edilen (TL)","prior","num")
+    +field("Beyanname türü","beyTur")+field("Beyanname dönemi","beyDonem")+field("Beyanname tarihi","beyTarih","date")+field("Yetkili adı soyadı (şirketler için)","yetkili");
+  $("fYat").innerHTML = S.yat.map((y,i)=>`<div class="rc">
+    <div class="rc-grid">${field("Yıl",`yat.${i}.yil`,"int")}${field("Açıklama",`yat.${i}.acik`)}
+    ${field("Harcama (TL)",`yat.${i}.harcama`,"num")}${field("Katkı oranı (%)",`yat.${i}.oran`,"num")}
+    ${field("Manuel katkı (TL)",`yat.${i}.manuel`,"num",'placeholder="Boşsa harcama × oran"')}</div>
+    <div class="rc-foot"><span>Katkı <b id="yk${i}"></b> <em id="ys${i}"></em></span><button class="del" data-del="yat.${i}">Satırı sil</button></div></div>`).join("");
+  $("fVergi").innerHTML = S.vergi.map((v,i)=>`<div class="rc">
+    <div class="rc-grid">${field("Tahakkuk no",`vergi.${i}.tah`)}${field("Vergi kodu / türü",`vergi.${i}.tur`)}
+    ${field("Vade",`vergi.${i}.vade`,"date")}${field("Asıl borç (TL)",`vergi.${i}.asil`,"num")}
+    ${field("Gecikme zammı (TL)",`vergi.${i}.gz`,"num")}${field("Talep tutarı (TL)",`vergi.${i}.talep`,"num",'placeholder="Boşsa toplam borç"')}</div>
+    <div class="rc-foot"><span>Talep <b id="vt${i}"></b> <em id="vs${i}"></em></span><button class="del" data-del="vergi.${i}">Satırı sil</button></div></div>`).join("");
+  $("fEkler").value=S.ekler||"";
+}
+$("fEkler").addEventListener("change",e=>{ S.ekler=e.target.value; save(); update(); });
+document.addEventListener("click",e=>{
+  const d=e.target.dataset.del; if(!d) return;
+  const [arr,i]=d.split("."); S[arr].splice(+i,1); save(); renderForm(); update();
+});
+$("addYat").onclick=()=>{ S.yat.push({yil:S.donem,acik:"",harcama:null,oran:null,manuel:null}); save(); renderForm(); update(); };
+$("addVergi").onclick=()=>{ const p=S.vergi[S.vergi.length-1]; S.vergi.push({tah:p?.tah||"",tur:"",vade:p?.vade||"",asil:null,gz:0,talep:null}); save(); renderForm(); update(); };
+$("btnOrnek").onclick=()=>{ S=JSON.parse(JSON.stringify(DEFAULTS)); save(); renderForm(); update(); };
+$("btnYeni").onclick=()=>{ S=JSON.parse(JSON.stringify(EMPTY)); save(); renderForm(); update(); };
+
+/* outputs */
+function blocksToHtml(B){
+  const runs=rs=>rs.map(r=>r.b?`<b>${esc(r.text)}</b>`:esc(r.text)).join("");
+  return B.map(b=>{
+    if(b.t==="p") return `<p class="${b.justify?"j":""} ${b.indent?"in":""}" style="text-align:${b.justify?"justify":b.align||"left"};margin:${(b.before||0)/20}pt 0 ${(b.after??120)/20}pt">${runs(b.runs)}</p>`;
+    if(b.t==="break") return `<hr class="pb">`;
+    if(b.t==="list") return `<${b.ordered?"ol":"ul"}>${b.items.map(it=>`<li>${typeof it==="string"?esc(it):runs(it)}</li>`).join("")}</${b.ordered?"ol":"ul"}>`;
+    if(b.t==="table") return `<div class="scroll"><table class="doc-t">${b.rows.map((r,ri)=>`<tr>${r.map(c=>`<${ri===0&&b.header?"th":"td"} style="text-align:${c.align||"left"}">${c.b?`<b>${esc(c.text)}</b>`:esc(c.text)}</${ri===0&&b.header?"th":"td"}>`).join("")}</tr>`).join("")}</table></div>`;
+    return "";
+  }).join("");
+}
+function update(){
+  R=compute(S);
+  $("hUnvan").textContent=S.unvan||"Mükellef girilmedi";
+  $("hBelge").textContent=S.belgeNo?`Belge ${S.belgeNo} · ${S.donem??"…"} dönemi`:"";
+  $("kalan").textContent=TL(R.kalan); $("kalan").classList.toggle("neg",R.kalan<-0.005);
+  $("kalanNot").textContent = `Terkin limiti ${TL(R.f)}; bu dilekçe ${TL(R.bu)}, önceki terkinler ${TL(R.prior)}.`;
+  const pct=v=>R.b>0?Math.max(0,Math.min(100,v/R.b*100))+"%":"0%";
+  $("bIkv").style.width=pct(R.d); $("bTer").style.width=pct(R.g); $("bVaz").style.width=pct(R.vaz);
+  $("lIkv").textContent=TL(R.d); $("lTer").textContent=TL(R.g); $("lVaz").textContent=TL(R.vaz); $("lDev").textContent=TL(R.devreden);
+  $("sonuc").textContent = R.ok?"Dilekçe verilebilir":"Düzeltme gerekli";
+  $("sonuc").className = "badge "+(R.ok?"ok":"bad");
+  if(R.son){ const gun=Math.round((new Date(R.son)-new Date(S.dilTarih||R.son))/864e5); $("sure").textContent=`Son talep tarihi ${trDate(R.son)}`+(S.dilTarih?` (dilekçeden ${gun} gün sonra)`:""); }
+  $("ek1").innerHTML=[["(a)","Kayıtlı toplam yatırım tutarı",R.a],["(b)","Hak edilen yatırıma katkı tutarı",R.b],["(\u200Cc)",`b × %${tl(S.tor,0)}`,R.c],
+    ["(d)","İndirimli KV ile kullanılan katkı",R.d],["(e)",`(b − d) × %${tl(S.ust,0)}`,R.e],["(f)","Terkin edilebilecek en fazla tutar",R.f,"k"],
+    ["","Önceki dilekçelerle terkin edilen",R.prior],["","Bu dilekçe ile talep edilen",R.bu],["(g)","Terkin yoluyla kullanılan (bu dilekçe dahil)",R.g],
+    ["","Kalan terkin hakkı (f − g)",R.kalan,"k"],["","Terkin nedeniyle vazgeçilen katkı (g × 1)",R.vaz],["","Katkıdan toplam düşülen (terkin + vazgeçilen)",R.g+R.vaz],["","Devreden yatırıma katkı tutarı",R.devreden]]
+    .map(([a,b,v,c])=>`<tr class="${c||""}${v<-0.005?" neg":""}"><td>${a}</td><td>${b}</td><td>${TL(v)}</td></tr>`).join("");
+  const ck=R.checks.map(c=>`<li><span class="mark ${c.s}" aria-hidden="true">${c.s==="ok"?"✓":c.s==="bad"?"!":"?"}</span><div><strong>${esc(c.h)}</strong><p>${esc(c.p)}</p><small>${esc(c.d)}</small></div></li>`).join("");
+  $("checks").innerHTML=ck;
+  S.yat.forEach((y,i)=>{ const r=R.yat[i]; if(!$("yk"+i)) return; $("yk"+i).textContent=TL(r.katki); $("ys"+i).textContent=r.empty?"":r.kapsam?"· kapsamda":"· kapsam dışı"; $("ys"+i).className=r.kapsam?"":"warn"; });
+  S.vergi.forEach((v,i)=>{ const r=R.vergi[i]; if(!$("vt"+i)) return; $("vt"+i).textContent=TL(r.talep); $("vs"+i).textContent=r.durum==="✓"?"":"· "+r.durum; $("vs"+i).className="bad"; });
+  $("sumYat").textContent=`Kapsamdaki harcama ${TL(R.a)}, katkı ${TL(R.b)}`;
+  $("sumVergi").textContent=`Toplam talep ${TL(R.bu)} · kullanılabilir limit ${TL(R.kullanilabilir)}`;
+  $("docPreview").innerHTML=blocksToHtml(dilekceBlocks(S,R));
+  const bad=R.checks.filter(c=>c.s==="bad");
+  $("docWarn").hidden=!bad.length;
+  $("docWarn").innerHTML=bad.length?`<strong>Dilekçede düzeltilmesi gereken ${bad.length} konu var.</strong> ${bad.map(c=>esc(c.h)).join(", ")}. Panel sekmesinde ayrıntıları görebilirsiniz.`:"";
+}
+
+/* download: plain browser download */
+$("btnWord").onclick=async()=>{
+  const msg=$("dlMsg");
+  if(typeof JSZip==="undefined"){ msg.textContent="Word oluşturucu yüklenemedi. Sayfayı yenileyip tekrar deneyin."; return; }
+  try{
+    msg.textContent="Dilekçe hazırlanıyor…";
+    const data=await buildDocx(JSZip,dilekceBlocks(S,R));
+    const blob=new Blob([data],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+    const ad=(S.unvan||"Mukellef").split(" ")[0].replace(/[^\wÇĞİÖŞÜçğıöşü-]/g,"");
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download=`${ad}_Terkin_Dilekcesi_${S.dilTarih||"tarihsiz"}.docx`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    msg.textContent="Dilekçe indirildi.";
+  }catch(e){ msg.textContent="Dilekçe oluşturulamadı: "+(e?.message||"bilinmeyen hata"); }
+};
+if("serviceWorker" in navigator && location.protocol==="https:"){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+renderForm(); update();
+
+</script>
+</body>
+</html>

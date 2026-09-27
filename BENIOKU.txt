@@ -1,0 +1,32 @@
+YATIRIMA KATKI TERKİN PROGRAMI – KURULUM
+
+Bu klasör, internetten açılan ve telefona/bilgisayara uygulama gibi kurulabilen bir web uygulamasıdır.
+Sunucu tarafında program çalıştırmaz; tüm hesaplama kullanıcının cihazında yapılır ve veriler o cihazın tarayıcısında saklanır.
+
+YAYINLAMA (birini seçin)
+
+A) Kendi sitenizde (ör. nextax.com.tr/terkin)
+   1. Hosting panelinizde (cPanel dosya yöneticisi veya FTP) site kök dizinine "terkin" adlı bir klasör açın.
+   2. Bu klasördeki TÜM dosyaları (index.html, sw.js, manifest.webmanifest, jszip.min.js, icons klasörü) içine yükleyin.
+   3. https://alanadiniz/terkin/ adresini açın. Sitenin HTTPS (SSL) ile çalışması gerekir.
+
+B) Ücretsiz barındırma (Netlify)
+   1. app.netlify.com adresinde ücretsiz hesap açın.
+   2. "Add new site" > "Deploy manually" bölümüne bu "terkin" klasörünü sürükleyip bırakın.
+   3. Size verilen https://....netlify.app adresi uygulamanızdır; site ayarlarından kendi alan adınızı bağlayabilirsiniz.
+
+TELEFONA KURMA
+   iPhone: Safari ile adresi açın > Paylaş > "Ana Ekrana Ekle".
+   Android: Chrome ile adresi açın > menü > "Uygulamayı yükle" veya "Ana ekrana ekle".
+   Bilgisayar: Chrome/Edge adres çubuğundaki "Yükle" simgesine tıklayın.
+   Kurulduktan sonra internet olmadan da çalışır.
+
+GÜNCELLEME
+   Dosyaları yenisiyle değiştirin ve sw.js içindeki CACHE="terkin-v1" değerini terkin-v2 gibi artırın.
+
+ÖNEMLİ
+   - Veriler yalnızca kullanıcının kendi cihazında tutulur; cihazlar arası eşitleme yoktur.
+     Tarayıcı verileri silinirse girilen bilgiler de silinir.
+   - Örnek veriler anonimdir; gerçek mükellef bilgisi içermez.
+   - Hesaplamalar KVK 32/A-8 ve 1 Seri No.lu KV Genel Tebliği 32.2.13 bölümüne dayanır;
+     uygulamadan önce güncel mevzuat ile teyit edilmelidir.
