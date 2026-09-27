@@ -129,7 +129,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <section><h2>Mükellef ve belge</h2><div class="fgrid" id="fMukellef"></div></section>
   <section><h2>Dilekçe ve beyanname</h2><div class="fgrid" id="fDilekce"></div></section>
   <section><h2>Yatırım harcamaları</h2>
-    <p class="muted" style="margin:0">Yılı ve teşvik belgesindeki yatırıma katkı oranını listeden seçin. Oran seçmezseniz katkı tutarını "Manuel katkı" alanına yazın; manuel katkı doluysa oran yerine o kullanılır.</p>
+    <p class="muted" style="margin:0">Yılı ve teşvik belgesindeki yatırıma katkı oranını (%5–%50) listeden seçin. Oran seçmezseniz katkı tutarını "Manuel katkı" alanına yazın; manuel katkı doluysa oran yerine o kullanılır.</p>
     <div id="fYat"></div><div class="row"><button id="addYat">Harcama ekle</button></div><p class="sum" id="sumYat"></p></section>
   <section><h2>Terkini talep edilen vergiler</h2>
     <div id="fVergi"></div><div class="row"><button id="addVergi">Vergi ekle</button></div><p class="sum" id="sumVergi"></p></section>
@@ -398,19 +398,7 @@ function shown(v,t){ if(v==null) return ""; if(t==="num") return tl(v); return v
 function field(label,k,t="text",extra=""){
   return `<label class="f"><span>${label}</span><input data-k="${k}" data-t="${t}" value="${esc(shown(getPath(k),t))}" ${t==="date"?'type="date"':""} ${t==="num"||t==="int"?'inputmode="decimal"':""} ${extra}></label>`;
 }
-/* Yatırıma katkı oranları: 9903 s. Karar md. 20; 2012/3305 s. Karar md. 15 ve geçici md. 8 */
-const ORANLAR=[
-  {g:"9903 sayılı Karar (2025 ve sonrası belgeler)",l:[
-    ["9903-tek",50,"Teknoloji Hamlesi / Yerel Kalkınma Hamlesi"],["9903-str",40,"Stratejik Hamle"],
-    ["9903-onc",30,"Öncelikli yatırımlar"],["9903-hdf",20,"Hedef yatırımlar"]]},
-  {g:"2012/3305 sayılı Karar – bölgesel / stratejik",l:[
-    ["3305-b1",15,"1. bölge"],["3305-b2",20,"2. bölge"],["3305-b3",25,"3. bölge"],
-    ["3305-b4",30,"4. bölge"],["3305-b5",40,"5. bölge"],["3305-b6",50,"6. bölge / stratejik yatırım"]]},
-  {g:"2012/3305 – imalat sanayi, geçici md. 8 (+15 puan)",l:[
-    ["3305-i1",30,"1. bölge + 15"],["3305-i2",35,"2. bölge + 15"],["3305-i3",40,"3. bölge + 15"],
-    ["3305-i4",45,"4. bölge + 15"],["3305-i5",55,"5. bölge + 15"],["3305-i6",65,"6. bölge / stratejik + 15"]]}
-];
-const ORAN_BY_KEY=Object.fromEntries(ORANLAR.flatMap(g=>g.l.map(([k,r])=>[k,r])));
+const ORANLAR=Array.from({length:10},(_,i)=>(i+1)*5); /* %5 … %50 */
 function yilSec(label,k){
   const v=getPath(k), son=new Date().getFullYear();
   const yillar=[]; for(let y=son;y>=2009;y--) yillar.push(y);
@@ -418,22 +406,16 @@ function yilSec(label,k){
   return `<label class="f"><span>${label}</span><select data-k="${k}" data-t="int"><option value="">Yıl seçin</option>${yillar.map(y=>`<option value="${y}"${y===v?" selected":""}>${y}</option>`).join("")}</select></label>`;
 }
 function oranSec(label,i){
-  const y=S.yat[i]; let sec=y.oranSec&&ORAN_BY_KEY[y.oranSec]===y.oran?y.oranSec:null;
-  if(!sec && y.oran!=null) sec="__eski";
-  const opt=(k,t)=>`<option value="${k}"${k===sec?" selected":""}>${t}</option>`;
-  return `<label class="f"><span>${label}</span><select data-k="yat.${i}.oranSec" data-t="oran">${opt("","Seçilmedi (manuel katkı)")}`
-    +(sec==="__eski"?opt("__eski",`%${tl(y.oran)} (daha önce girilmiş)`):"")
-    +ORANLAR.map(g=>`<optgroup label="${g.g}">${g.l.map(([k,r,a])=>opt(k,`%${r} · ${a}`)).join("")}</optgroup>`).join("")+`</select></label>`;
+  const v=S.yat[i].oran, eski=v!=null && !ORANLAR.includes(v);
+  const opt=(k,t,sel)=>`<option value="${k}"${sel?" selected":""}>${t}</option>`;
+  return `<label class="f"><span>${label}</span><select data-k="yat.${i}.oran" data-t="oran">${opt("","Seçilmedi (manuel katkı)",v==null)}`
+    +(eski?opt("__eski",`%${tl(v)} (daha önce girilmiş)`,true):"")
+    +ORANLAR.map(r=>opt(r,`%${r}`,r===v)).join("")+`</select></label>`;
 }
 document.addEventListener("change",e=>{
   const el=e.target; if(!el.dataset.k) return;
   const t=el.dataset.t; let v=el.value;
-  if(t==="oran"){
-    if(v==="__eski") return;
-    const base=el.dataset.k.replace(/\.oranSec$/,"");
-    setPath(el.dataset.k,v||null); setPath(base+".oran",v?ORAN_BY_KEY[v]:null);
-    save(); update(); return;
-  }
+  if(t==="oran"){ if(v==="__eski") return; setPath(el.dataset.k,v?+v:null); save(); update(); return; }
   if(t==="num") v=parseNum(v); else if(t==="int"){ v=parseInt(v); if(isNaN(v)) v=null; }
   setPath(el.dataset.k,v);
   if(t==="num") el.value=shown(v,t);
