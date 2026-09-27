@@ -129,7 +129,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <section><h2>Mükellef ve belge</h2><div class="fgrid" id="fMukellef"></div></section>
   <section><h2>Dilekçe ve beyanname</h2><div class="fgrid" id="fDilekce"></div></section>
   <section><h2>Yatırım harcamaları</h2>
-    <p class="muted" style="margin:0">Harcamaları yıl bazında girin. Katkı tutarı biliniyorsa "Manuel katkı" alanına yazın; boşsa harcama × oran kullanılır.</p>
+    <p class="muted" style="margin:0">Yılı ve teşvik belgesindeki yatırıma katkı oranını (%5–%50) listeden seçin. Oran seçilince "Manuel katkı" boşaltılır ve katkı harcama × oran olur. Oran seçmezseniz katkı tutarını "Manuel katkı" alanına yazın.</p>
     <div id="fYat"></div><div class="row"><button id="addYat">Harcama ekle</button></div><p class="sum" id="sumYat"></p></section>
   <section><h2>Terkini talep edilen vergiler</h2>
     <div id="fVergi"></div><div class="row"><button id="addVergi">Vergi ekle</button></div><p class="sum" id="sumVergi"></p></section>
@@ -398,9 +398,32 @@ function shown(v,t){ if(v==null) return ""; if(t==="num") return tl(v); return v
 function field(label,k,t="text",extra=""){
   return `<label class="f"><span>${label}</span><input data-k="${k}" data-t="${t}" value="${esc(shown(getPath(k),t))}" ${t==="date"?'type="date"':""} ${t==="num"||t==="int"?'inputmode="decimal"':""} ${extra}></label>`;
 }
+const ORANLAR=Array.from({length:10},(_,i)=>(i+1)*5); /* %5 … %50 */
+function yilSec(label,k){
+  const v=getPath(k), son=new Date().getFullYear();
+  const yillar=[]; for(let y=son;y>=2009;y--) yillar.push(y);
+  if(v!=null && !yillar.includes(v)) yillar.push(v);
+  return `<label class="f"><span>${label}</span><select data-k="${k}" data-t="int"><option value="">Yıl seçin</option>${yillar.map(y=>`<option value="${y}"${y===v?" selected":""}>${y}</option>`).join("")}</select></label>`;
+}
+function oranSec(label,i){
+  const v=S.yat[i].oran, eski=v!=null && !ORANLAR.includes(v);
+  const opt=(k,t,sel)=>`<option value="${k}"${sel?" selected":""}>${t}</option>`;
+  return `<label class="f"><span>${label}</span><select data-k="yat.${i}.oran" data-t="oran">${opt("","Seçilmedi (manuel katkı)",v==null)}`
+    +(eski?opt("__eski",`%${tl(v)} (daha önce girilmiş)`,true):"")
+    +ORANLAR.map(r=>opt(r,`%${r}`,r===v)).join("")+`</select></label>`;
+}
 document.addEventListener("change",e=>{
   const el=e.target; if(!el.dataset.k) return;
   const t=el.dataset.t; let v=el.value;
+  if(t==="oran"){
+    if(v==="__eski") return;
+    setPath(el.dataset.k,v?+v:null);
+    if(v){ /* oran seçilince manuel katkı boşaltılır, katkı harcama × oran olur */
+      const mk=el.dataset.k.replace(/\.oran$/,".manuel"); setPath(mk,null);
+      const m=document.querySelector(`input[data-k="${mk}"]`); if(m) m.value="";
+    }
+    save(); update(); return;
+  }
   if(t==="num") v=parseNum(v); else if(t==="int"){ v=parseInt(v); if(isNaN(v)) v=null; }
   setPath(el.dataset.k,v);
   if(t==="num") el.value=shown(v,t);
@@ -416,8 +439,8 @@ function renderForm(){
     +field("İndirimli KV ile kullanılan katkı (TL)","ikv","num")+field("Önceki dilekçelerle terkin edilen (TL)","prior","num")
     +field("Beyanname türü","beyTur")+field("Beyanname dönemi","beyDonem")+field("Beyanname tarihi","beyTarih","date")+field("Yetkili adı soyadı (şirketler için)","yetkili");
   $("fYat").innerHTML = S.yat.map((y,i)=>`<div class="rc">
-    <div class="rc-grid">${field("Yıl",`yat.${i}.yil`,"int")}${field("Açıklama",`yat.${i}.acik`)}
-    ${field("Harcama (TL)",`yat.${i}.harcama`,"num")}${field("Katkı oranı (%)",`yat.${i}.oran`,"num")}
+    <div class="rc-grid">${yilSec("Yıl",`yat.${i}.yil`)}${field("Harcama kalemi",`yat.${i}.acik`)}
+    ${field("Harcama (TL)",`yat.${i}.harcama`,"num")}${oranSec("Katkı oranı (belgedeki)",i)}
     ${field("Manuel katkı (TL)",`yat.${i}.manuel`,"num",'placeholder="Boşsa harcama × oran"')}</div>
     <div class="rc-foot"><span>Katkı <b id="yk${i}"></b> <em id="ys${i}"></em></span><button class="del" data-del="yat.${i}">Satırı sil</button></div></div>`).join("");
   $("fVergi").innerHTML = S.vergi.map((v,i)=>`<div class="rc">
