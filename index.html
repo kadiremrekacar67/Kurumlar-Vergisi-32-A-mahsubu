@@ -129,7 +129,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <section><h2>Mükellef ve belge</h2><div class="fgrid" id="fMukellef"></div></section>
   <section><h2>Dilekçe ve beyanname</h2><div class="fgrid" id="fDilekce"></div></section>
   <section><h2>Yatırım harcamaları</h2>
-    <p class="muted" style="margin:0">Yılı ve teşvik belgesindeki yatırıma katkı oranını (%5–%50) listeden seçin. Oran seçmezseniz katkı tutarını "Manuel katkı" alanına yazın; manuel katkı doluysa oran yerine o kullanılır.</p>
+    <p class="muted" style="margin:0">Yılı ve teşvik belgesindeki yatırıma katkı oranını (%5–%50) listeden seçin. Oran seçilince "Manuel katkı" boşaltılır ve katkı harcama × oran olur. Oran seçmezseniz katkı tutarını "Manuel katkı" alanına yazın.</p>
     <div id="fYat"></div><div class="row"><button id="addYat">Harcama ekle</button></div><p class="sum" id="sumYat"></p></section>
   <section><h2>Terkini talep edilen vergiler</h2>
     <div id="fVergi"></div><div class="row"><button id="addVergi">Vergi ekle</button></div><p class="sum" id="sumVergi"></p></section>
@@ -415,7 +415,15 @@ function oranSec(label,i){
 document.addEventListener("change",e=>{
   const el=e.target; if(!el.dataset.k) return;
   const t=el.dataset.t; let v=el.value;
-  if(t==="oran"){ if(v==="__eski") return; setPath(el.dataset.k,v?+v:null); save(); update(); return; }
+  if(t==="oran"){
+    if(v==="__eski") return;
+    setPath(el.dataset.k,v?+v:null);
+    if(v){ /* oran seçilince manuel katkı boşaltılır, katkı harcama × oran olur */
+      const mk=el.dataset.k.replace(/\.oran$/,".manuel"); setPath(mk,null);
+      const m=document.querySelector(`input[data-k="${mk}"]`); if(m) m.value="";
+    }
+    save(); update(); return;
+  }
   if(t==="num") v=parseNum(v); else if(t==="int"){ v=parseInt(v); if(isNaN(v)) v=null; }
   setPath(el.dataset.k,v);
   if(t==="num") el.value=shown(v,t);
