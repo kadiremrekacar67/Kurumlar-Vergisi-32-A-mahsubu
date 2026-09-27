@@ -386,7 +386,7 @@ if(typeof module!=="undefined") module.exports.vdBaslik=vdBaslik;
 /* ===== UI ===== */
 const KEY="terkin-app-v1";
 let S; try{ S=JSON.parse(localStorage.getItem(KEY)) }catch(e){}
-if(!S||!S.vergi) S=JSON.parse(JSON.stringify(EMPTY));
+if(!S||!S.vergi) S=JSON.parse(JSON.stringify(DEFAULTS));
 if(!S.tip) S.tip="kurum";
 const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(S)) }catch(e){} };
 const $=id=>document.getElementById(id);
